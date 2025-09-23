@@ -1,0 +1,27 @@
+# Database
+*.sql
+*.db
+
+# Log files
+*.log
+
+# Environment variables
+.env
+config.php
+
+# Temporary files
+tmp/
+temp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Uploads (jika ada folder upload)
+uploads/
