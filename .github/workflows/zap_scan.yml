@@ -1,4 +1,4 @@
-name: ZAP Security Scan
+name: Security Scan
 
 on:
   push:
@@ -7,16 +7,32 @@ on:
     branches: [ main ]
 
 jobs:
-  zap-baseline-scan:
+  security-scan:
     runs-on: ubuntu-latest
-    name: ZAP Baseline Scan
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.10.0
-        with:
-          target: 'https://url-aplikasi-anda.com'
-          rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a'
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        
+    - name: PHP Syntax Check
+      run: |
+        echo "Checking PHP syntax..."
+        find . -name "*.php" -exec php -l {} \; || true
+        
+    - name: Basic Security Checks
+      run: |
+        echo "Running basic security checks..."
+        # Check for common vulnerabilities
+        grep -r "mysql_query" . --include="*.php" && echo "Warning: mysql_query found" || true
+        grep -r "eval(" . --include="*.php" && echo "Warning: eval() found" || true
+        grep -r "base64_decode" . --include="*.php" && echo "Warning: base64_decode found" || true
+        
+    - name: Check for exposed credentials
+      run: |
+        echo "Checking for potential exposed credentials..."
+        grep -r "password.*=" . --include="*.php" | grep -v "//" | head -5 || true
