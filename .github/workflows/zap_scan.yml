@@ -5,6 +5,10 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   zap_scan:
     runs-on: ubuntu-latest
@@ -12,19 +16,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run ZAP Baseline Scan
+      - name: Run ZAP Baseline Scan (authenticated via scan_token)
         uses: zaproxy/action-baseline@v0.12.0
         with:
-          target: "https://reservasihotel.infinityfreeapp.com"
-          cmd_options: "-a -J report_json.json -w report_html.html -m 10 -r report_md.md -x report_xml.xml -c report_csv.csv"
+          # target: arahkan ke endpoint scan_login.php dengan token agar session login terbuat
+          target: "https://reservasihotel.infinityfreeapp.com/scan_login.php?scan_token=k0ksiK3rit@Scan2025!"
+          cmd_options: "-a -T 5 -r zap_report.md -w zap_report.html -J zap_report.json -x zap_report.xml -c zap_report.csv"
 
       - name: Upload ZAP Reports
         uses: actions/upload-artifact@v4
         with:
           name: zap-reports
           path: |
-            report_html.html
-            report_json.json
-            report_md.md
-            report_xml.xml
-            report_csv.csv
+            zap_report.html
+            zap_report.json
+            zap_report.md
+            zap_report.xml
+            zap_report.csv
