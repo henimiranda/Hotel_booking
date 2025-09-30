@@ -1,30 +1,31 @@
-name: zap_scan
+name: ZAP Security Scan
 
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   zap_scan:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: ZAP Scan
+      - name: Run ZAP Full Scan with Login
         uses: zaproxy/action-full-scan@v0.8.0
         with:
-          target: 'https://reservasihotel.infinityfreeapp.com/'
-          cmd_options: '-r zap_report.html -w zap_report.md -x zap_report.xml -J zap_report.json -c zap_report.csv'
+          target: "https://reservasihotel.infinityfreeapp.com/"
+          context_file: ".zap/context.context"
+          user: "customer1"
+          cmd_options: "-r zap_report.html -J zap_report.json -x zap_report.xml -w zap_report.md"
 
-      - name: Upload ZAP reports
-        uses: actions/upload-artifact@v3
+      - name: Upload ZAP Reports
+        uses: actions/upload-artifact@v4
         with:
-  name: zap_scan_reports
-  path: |
-    zap/zap_report.html
-    zap/zap_report.md
-    zap/zap_report.xml
-    zap/zap_report.json
-    zap/zap_report.csv
-
+          name: zap-reports
+          path: |
+            zap_report.html
+            zap_report.json
+            zap_report.xml
+            zap_report.md

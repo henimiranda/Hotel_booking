@@ -1,0 +1,21 @@
+<context>
+  <name>hotel</name>
+  <description>Hotel site with login</description>
+  <authentication>
+    <method>formBasedAuthentication</method>
+    <param name="loginUrl" value="https://reservasihotel.infinityfreeapp.com/login.php"/>
+    <param name="loginRequestData" value="username={%username%}&password={%password%}"/>
+  </authentication>
+  <sessionManagement>
+    <method>cookieBasedSessionManagement</method>
+  </sessionManagement>
+  <users>
+    <user>
+      <name>customer1</name>
+      <credentials>
+        <param name="username" value="customer1"/>
+        <param name="password" value="customer123"/>
+      </credentials>
+    </user>
+  </users>
+</context>
