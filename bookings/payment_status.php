@@ -17,7 +17,7 @@ if (!isset($_GET['booking_id'])) {
 $booking_id = intval($_GET['booking_id']);
 
 // Ambil data booking
-$query = "SELECT b.*, r.room_number, r.room_type, r.price_per_night
+$query = "SELECT b.*, r.room_number, r.room_type 
           FROM bookings b 
           JOIN rooms r ON b.room_id = r.id 
           WHERE b.id = $booking_id";
@@ -29,37 +29,20 @@ if (!$booking) {
     exit();
 }
 
-// Hitung selisih hari untuk info
-$checkin = new DateTime($booking['check_in']);
-$checkout = new DateTime($booking['check_out']);
-$night_count = $checkin->diff($checkout)->days;
+// Simulasi: 70% kemungkinan pembayaran berhasil, 30% pending
+$payment_status = (rand(1, 10) <= 7) ? 'paid' : 'pending';
+$status_message = ($payment_status == 'paid') ? 
+    'Pembayaran Berhasil!' : 'Menunggu Konfirmasi Pembayaran';
 
-// Tentukan status dan icon
-$status_config = [
-    'pending' => [
-        'icon' => 'fa-clock',
-        'color' => 'warning',
-        'title' => 'Menunggu Konfirmasi',
-        'message' => 'Pembayaran sedang menunggu konfirmasi admin',
-        'alert' => 'warning'
-    ],
-    'paid' => [
-        'icon' => 'fa-check-circle',
-        'color' => 'success',
-        'title' => 'Pembayaran Berhasil',
-        'message' => 'Pembayaran telah dikonfirmasi oleh admin',
-        'alert' => 'success'
-    ],
-    'failed' => [
-        'icon' => 'fa-times-circle',
-        'color' => 'danger',
-        'title' => 'Pembayaran Gagal',
-        'message' => 'Pembayaran tidak valid atau ditolak',
-        'alert' => 'danger'
-    ]
-];
-
-$status_info = $status_config[$booking['payment_status']];
+// Update status pembayaran (simulasi)
+if ($payment_status == 'paid') {
+    $update_query = "UPDATE bookings SET 
+                    payment_status = 'paid', 
+                    payment_date = NOW(),
+                    status = 'confirmed'
+                    WHERE id = $booking_id";
+    mysqli_query($koneksi, $update_query);
+}
 ?>
 
 <!DOCTYPE html>
@@ -83,40 +66,8 @@ $status_info = $status_config[$booking['payment_status']];
             font-size: 4rem;
             margin-bottom: 20px;
         }
-        .timeline {
-            position: relative;
-            padding: 20px 0;
-        }
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 30px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: #e9ecef;
-        }
-        .timeline-item {
-            position: relative;
-            margin-bottom: 30px;
-            padding-left: 60px;
-        }
-        .timeline-icon {
-            position: absolute;
-            left: 20px;
-            top: 0;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #e9ecef;
-            border: 3px solid white;
-        }
-        .timeline-item.active .timeline-icon {
-            background: #4CAF50;
-        }
-        .timeline-item.completed .timeline-icon {
-            background: #4CAF50;
-        }
+        .success { color: #28a745; }
+        .warning { color: #ffc107; }
         .loading {
             display: inline-block;
             width: 20px;
@@ -140,183 +91,114 @@ $status_info = $status_config[$booking['payment_status']];
                 <i class="fas fa-hotel me-2"></i>
                 <strong>Luxury Hotel</strong>
             </a>
-            <div class="navbar-nav ms-auto">
-                <span class="navbar-text me-3">Halo, <?php echo $_SESSION['full_name']; ?></span>
-                <a href="../logout.php" class="btn btn-outline-light btn-sm">Logout</a>
-            </div>
         </div>
     </nav>
 
     <div class="container mt-5">
         <div class="row justify-content-center">
-            <div class="col-lg-8">
+            <div class="col-lg-6">
                 <div class="status-card">
-                    <div class="card-body p-5">
+                    <div class="card-body text-center p-5">
                         
-                        <!-- Status Header -->
-                        <div class="text-center mb-4">
-                            <div class="status-icon text-<?php echo $status_info['color']; ?>">
-                                <i class="fas <?php echo $status_info['icon']; ?>"></i>
-                            </div>
-                            <h2 class="text-<?php echo $status_info['color']; ?>"><?php echo $status_info['title']; ?></h2>
-                            <p class="lead"><?php echo $status_info['message']; ?></p>
-                            
-                            <?php if ($booking['payment_status'] == 'pending'): ?>
-                            <div class="mt-3">
-                                <div class="loading"></div>
-                                <span class="ms-2">Menunggu konfirmasi admin...</span>
-                            </div>
-                            <?php endif; ?>
+                        <?php if ($payment_status == 'paid'): ?>
+                        <!-- Pembayaran Berhasil -->
+                        <div class="status-icon success">
+                            <i class="fas fa-check-circle"></i>
                         </div>
-
-                        <!-- Alert Status -->
-                        <div class="alert alert-<?php echo $status_info['alert']; ?>">
-                            <h5><i class="fas fa-info-circle me-2"></i>Status Booking</h5>
-                            <p class="mb-0">
-                                <strong>Kode Booking: #<?php echo str_pad($booking_id, 6, '0', STR_PAD_LEFT); ?></strong><br>
-                                Kamar <?php echo $booking['room_number']; ?> - <?php echo $booking['room_type']; ?>
-                            </p>
+                        <h2 class="text-success">Pembayaran Berhasil!</h2>
+                        <p class="lead">Terima kasih telah melakukan pembayaran.</p>
+                        
+                        <div class="alert alert-success mt-4">
+                            <h5><i class="fas fa-receipt me-2"></i>Booking Dikonfirmasi</h5>
+                            <p class="mb-0">Kamar <?php echo $booking['room_number']; ?> telah dipesan atas nama <?php echo $booking['customer_name']; ?></p>
                         </div>
-
-                        <!-- Timeline Proses -->
-                        <div class="card mt-4">
-                            <div class="card-header">
-                                <h5 class="mb-0"><i class="fas fa-list-ol me-2"></i>Proses Booking</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="timeline">
-                                    <div class="timeline-item <?php echo $booking['payment_status'] != 'pending' ? 'completed' : 'active'; ?>">
-                                        <div class="timeline-icon"></div>
-                                        <div>
-                                            <h6>Pembayaran Diverifikasi</h6>
-                                            <p class="text-muted small">Admin akan memverifikasi pembayaran Anda</p>
-                                            <?php if ($booking['payment_status'] == 'paid' && $booking['payment_date']): ?>
-                                                <small class="text-success">
-                                                    <i class="fas fa-check me-1"></i>
-                                                    Dikonfirmasi pada: <?php echo date('d M Y H:i', strtotime($booking['payment_date'])); ?>
-                                                </small>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="timeline-item <?php echo $booking['payment_status'] == 'paid' ? 'active' : ''; ?>">
-                                        <div class="timeline-icon"></div>
-                                        <div>
-                                            <h6>Booking Dikonfirmasi</h6>
-                                            <p class="text-muted small">Kamar dipastikan tersedia untuk Anda</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="timeline-item">
-                                        <div class="timeline-icon"></div>
-                                        <div>
-                                            <h6>Siap Check-in</h6>
-                                            <p class="text-muted small">Tunjukkan bukti booking saat check-in</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        
+                        <?php else: ?>
+                        <!-- Menunggu Konfirmasi -->
+                        <div class="status-icon warning">
+                            <i class="fas fa-clock"></i>
                         </div>
+                        <h2 class="text-warning">Menunggu Konfirmasi</h2>
+                        <p class="lead">Pembayaran Anda sedang diproses.</p>
+                        
+                        <div class="alert alert-warning mt-4">
+                            <h5><i class="fas fa-hourglass-half me-2"></i>Sedang Diverifikasi</h5>
+                            <p class="mb-0">Tim kami akan memverifikasi pembayaran Anda dalam 1-5 menit</p>
+                        </div>
+                        
+                        <!-- Loading Animation -->
+                        <div class="my-4">
+                            <div class="loading"></div>
+                            <span class="ms-2">Memeriksa status pembayaran...</span>
+                        </div>
+                        <?php endif; ?>
 
                         <!-- Informasi Booking -->
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <div class="card h-100">
-                                    <div class="card-header bg-light">
-                                        <h6 class="mb-0"><i class="fas fa-calendar me-2"></i>Detail Menginap</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <p><strong>Check-in:</strong><br>
-                                        <?php echo date('l, d F Y', strtotime($booking['check_in'])); ?><br>
-                                        <small class="text-muted">Setelah 14:00 WIB</small></p>
-                                        
-                                        <p><strong>Check-out:</strong><br>
-                                        <?php echo date('l, d F Y', strtotime($booking['check_out'])); ?><br>
-                                        <small class="text-muted">Sebelum 12:00 WIB</small></p>
-                                        
-                                        <p><strong>Durasi:</strong> <?php echo $night_count; ?> malam</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <div class="card h-100">
-                                    <div class="card-header bg-light">
-                                        <h6 class="mb-0"><i class="fas fa-receipt me-2"></i>Detail Pembayaran</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <p><strong>Total Pembayaran:</strong><br>
-                                        <span class="h5 text-success">Rp <?php echo number_format($booking['total_price'], 0, ',', '.'); ?></span></p>
-                                        
-                                        <p><strong>Metode Pembayaran:</strong><br>
-                                        <?php 
-                                        $payment_methods = [
-                                            'bca_va' => 'Transfer BCA Virtual Account',
-                                            'bni_va' => 'Transfer BNI Virtual Account', 
-                                            'bri_va' => 'Transfer BRI Virtual Account',
-                                            'qris' => 'QRIS'
-                                        ];
-                                        echo $payment_methods[$booking['payment_method']] ?? $booking['payment_method'];
-                                        ?></p>
-                                        
-                                        <?php if ($booking['va_number']): ?>
-                                        <p><strong>Virtual Account:</strong><br>
-                                        <code><?php echo chunk_split($booking['va_number'], 4, ' '); ?></code></p>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
+                        <div class="card mt-4">
+                            <div class="card-body text-start">
+                                <h5><i class="fas fa-info-circle me-2"></i>Detail Booking</h5>
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td><strong>Kode Booking</strong></td>
+                                        <td>#<?php echo str_pad($booking_id, 6, '0', STR_PAD_LEFT); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Kamar</strong></td>
+                                        <td><?php echo $booking['room_number'] . ' - ' . $booking['room_type']; ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Periode</strong></td>
+                                        <td><?php echo date('d M Y', strtotime($booking['check_in'])); ?> - <?php echo date('d M Y', strtotime($booking['check_out'])); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Total</strong></td>
+                                        <td class="text-success"><strong>Rp <?php echo number_format($booking['total_price'], 0, ',', '.'); ?></strong></td>
+                                    </tr>
+                                </table>
                             </div>
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="text-center mt-4">
-                            <a href="../customer_dashboard.php" class="btn btn-success">
-                                <i class="fas fa-home me-2"></i>Kembali ke Dashboard
-                            </a>
-                            
-                            <?php if ($booking['payment_status'] == 'paid'): ?>
-                            <a href="print_receipt.php?booking_id=<?php echo $booking_id; ?>" class="btn btn-outline-primary ms-2">
-                                <i class="fas fa-print me-2"></i>Cetak Invoice
-                            </a>
-                            <?php endif; ?>
-                            
-                            <button onclick="location.reload()" class="btn btn-outline-secondary ms-2">
-                                <i class="fas fa-sync-alt me-2"></i>Refresh Status
-                            </button>
-                        </div>
+<div class="text-center mt-4">
+    <button type="button" class="btn btn-success btn-lg" onclick="showPaymentConfirmation()">
+        <i class="fas fa-check-circle me-2"></i>Sudah Bayar
+    </button>
+    <a href="../customer_dashboard.php" class="btn btn-outline-secondary ms-2">Kembali</a>
+</div>
 
-                        <!-- Info Kontak Admin -->
-                        <?php if ($booking['payment_status'] == 'pending'): ?>
-                        <div class="alert alert-info mt-4">
-                            <h6><i class="fas fa-headset me-2"></i>Butuh Bantuan?</h6>
-                            <p class="mb-1">Jika pembayaran sudah dilakukan lebih dari 2 jam namun status belum update, hubungi:</p>
-                            <p class="mb-0">
-                                <strong>WhatsApp Admin: 0812-3456-7890</strong><br>
-                                <strong>Email: admin@luxuryhotel.com</strong>
-                            </p>
-                        </div>
-                        <?php endif; ?>
-                    </div>
+<!-- Modal Konfirmasi -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Konfirmasi Pembayaran</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Terima kasih telah melakukan pembayaran. Pembayaran Anda sedang menunggu konfirmasi dari admin.</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Proses Konfirmasi:</strong><br>
+                    1. Tim admin akan memverifikasi pembayaran Anda<br>
+                    2. Konfirmasi biasanya memakan waktu 1-2 jam<br>
+                    3. Status booking akan otomatis update setelah dikonfirmasi
                 </div>
+                <p>Anda dapat memantau status pembayaran di halaman status booking.</p>
+            </div>
+            <div class="modal-footer">
+                <a href="payment_status.php?booking_id=<?php echo $booking_id; ?>" class="btn btn-success">
+                    <i class="fas fa-eye me-2"></i>Lihat Status Booking
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Auto refresh untuk status pending -->
-    <?php if ($booking['payment_status'] == 'pending'): ?>
-    <script>
-    // Auto refresh setiap 30 detik
-    setTimeout(function() {
-        location.reload();
-    }, 30000);
-    
-    // Manual refresh dengan button
-    document.getElementById('refreshBtn').addEventListener('click', function() {
-        location.reload();
-    });
-    </script>
-    <?php endif; ?>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<script>
+function showPaymentConfirmation() {
+    // Tampilkan modal konfirmasi
+    var paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+    paymentModal.show();
+}
+</script>

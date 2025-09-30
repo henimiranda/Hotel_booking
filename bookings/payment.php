@@ -225,46 +225,48 @@ if (!$booking) {
                         </div>
 
                         <!-- Action Buttons -->
-<div class="text-center mt-4">
-    <button type="button" class="btn btn-success btn-lg" onclick="showPaymentConfirmation()">
-        <i class="fas fa-check-circle me-2"></i>Sudah Bayar
-    </button>
-    <a href="../customer_dashboard.php" class="btn btn-outline-secondary ms-2">Kembali</a>
-</div>
-
-<!-- Modal Konfirmasi -->
-<div class="modal fade" id="paymentModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Konfirmasi Pembayaran</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Terima kasih telah melakukan pembayaran. Pembayaran Anda sedang menunggu konfirmasi dari admin.</p>
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <strong>Proses Konfirmasi:</strong><br>
-                    1. Tim admin akan memverifikasi pembayaran Anda<br>
-                    2. Konfirmasi biasanya memakan waktu 1-2 jam<br>
-                    3. Status booking akan otomatis update setelah dikonfirmasi
+                        <div class="text-center mt-4">
+                            <a href="payment_status.php?booking_id=<?php echo $booking_id; ?>" class="btn btn-success btn-lg">
+                                <i class="fas fa-check-circle me-2"></i>Sudah Bayar
+                            </a>
+                            <a href="../customer_dashboard.php" class="btn btn-outline-secondary ms-2">Kembali</a>
+                        </div>
+                    </div>
                 </div>
-                <p>Anda dapat memantau status pembayaran di halaman status booking.</p>
-            </div>
-            <div class="modal-footer">
-                <a href="payment_status.php?booking_id=<?php echo $booking_id; ?>" class="btn btn-success">
-                    <i class="fas fa-eye me-2"></i>Lihat Status Booking
-                </a>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
-</div>
 
-<script>
-function showPaymentConfirmation() {
-    // Tampilkan modal konfirmasi
-    var paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
-    paymentModal.show();
-}
-</script>
+    <script>
+    // Countdown timer
+    function startCountdown() {
+        const expiryTime = new Date('<?php echo $booking['expiry_date']; ?>').getTime();
+        
+        const timer = setInterval(function() {
+            const now = new Date().getTime();
+            const distance = expiryTime - now;
+            
+            if (distance < 0) {
+                clearInterval(timer);
+                document.getElementById('countdown').innerHTML = "WAKTU HABIS";
+                document.getElementById('countdown').className = "text-danger";
+                return;
+            }
+            
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            
+            document.getElementById('countdown').innerHTML = 
+                hours.toString().padStart(2, '0') + ":" + 
+                minutes.toString().padStart(2, '0') + ":" + 
+                seconds.toString().padStart(2, '0');
+                
+        }, 1000);
+    }
+    
+    // Start countdown when page loads
+    document.addEventListener('DOMContentLoaded', startCountdown);
+    </script>
+</body>
+</html>

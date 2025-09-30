@@ -1,38 +1,26 @@
-name: Security Scan
+name: ZAP Security Scan
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  security-scan:
+  zap_scan:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.1'
-        
-    - name: PHP Syntax Check
-      run: |
-        echo "Checking PHP syntax..."
-        find . -name "*.php" -exec php -l {} \; || true
-        
-    - name: Basic Security Checks
-      run: |
-        echo "Running basic security checks..."
-        # Check for common vulnerabilities
-        grep -r "mysql_query" . --include="*.php" && echo "Warning: mysql_query found" || true
-        grep -r "eval(" . --include="*.php" && echo "Warning: eval() found" || true
-        grep -r "base64_decode" . --include="*.php" && echo "Warning: base64_decode found" || true
-        
-    - name: Check for exposed credentials
-      run: |
-        echo "Checking for potential exposed credentials..."
-        grep -r "password.*=" . --include="*.php" | grep -v "//" | head -5 || true
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Run ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.7.0
+        with:
+          target: "http://namadomain.infinityfreeapp.com"  # ganti dengan URL hosting InfinityFree kamu
+          rules_file_name: ".zap/rules.tsv"
+          cmd_options: "-a"
+
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: zap-report
+          path: report_html.html

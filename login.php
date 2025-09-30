@@ -1,11 +1,14 @@
 <?php
 session_start();
+session_unset(); // hapus semua data session
+session_destroy(); // hancurkan session
+session_start(); // buat session baru koson
 include 'koneksi.php';
 
 // Jika sudah login, redirect ke halaman sesuai role
 if (isset($_SESSION['user_id'])) {
     if ($_SESSION['role'] == 'admin') {
-        header("Location: index.php");
+        header("Location: admin_dashboard.php");
     } else {
         header("Location: customer_dashboard.php");
     }
@@ -23,17 +26,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($result && mysqli_num_rows($result) > 0) {
         $user = mysqli_fetch_assoc($result);
         
-        // Password simple check (plain text)
+        // Password simple check (plain text) → nanti bisa diganti password_verify
         if ($password === $user['password']) {
             // Login sukses
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['role'] = $user['role'];
+            $_SESSION['user_id']   = $user['id'];
+            $_SESSION['username']  = $user['username'];
+            $_SESSION['role']      = $user['role'];
             $_SESSION['full_name'] = $user['full_name'];
             
             // Redirect berdasarkan role
             if ($user['role'] == 'admin') {
-                header("Location: index.php");
+                header("Location: admin_dashboard.php");
             } else {
                 header("Location: customer_dashboard.php");
             }
