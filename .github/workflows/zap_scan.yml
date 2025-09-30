@@ -5,6 +5,9 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   zap_scan:
     runs-on: ubuntu-latest
@@ -16,9 +19,20 @@ jobs:
         uses: zaproxy/action-full-scan@v0.8.0
         with:
           target: "https://reservasihotel.infinityfreeapp.com/"
-          context_file: ".zap/context.context"
+          context_file: ".zap/hotel.context"
           user: "customer1"
-          cmd_options: "-r zap_report.html -J zap_report.json -x zap_report.xml -w zap_report.md"
+          cmd_options: "-a -r zap_report.html -J zap_report.json -w zap_report.md -x zap_report.xml"
+
+      - name: Convert JSON to CSV
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          jq -r '.site[0].alerts[] | [
+            .riskdesc,
+            .alert,
+            .count,
+            .solution,
+            .reference
+          ] | @csv' zap_report.json > zap_report.csv
 
       - name: Upload ZAP Reports
         uses: actions/upload-artifact@v4
@@ -29,3 +43,4 @@ jobs:
             zap_report.json
             zap_report.xml
             zap_report.md
+            zap_report.csv

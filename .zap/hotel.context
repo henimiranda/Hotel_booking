@@ -1,14 +1,20 @@
 <context>
   <name>hotel</name>
-  <description>Hotel site with login</description>
+  <description>Context untuk login ke website hotel</description>
+
+  <!-- Authentication pakai form -->
   <authentication>
     <method>formBasedAuthentication</method>
     <param name="loginUrl" value="https://reservasihotel.infinityfreeapp.com/login.php"/>
     <param name="loginRequestData" value="username={%username%}&password={%password%}"/>
   </authentication>
+
+  <!-- Session pakai cookie -->
   <sessionManagement>
     <method>cookieBasedSessionManagement</method>
   </sessionManagement>
+
+  <!-- User yang dipakai ZAP -->
   <users>
     <user>
       <name>customer1</name>
