@@ -19,14 +19,27 @@ jobs:
       - name: Run ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
-          target: "http://reservasihotel.infinityfreeapp.com"
+          target: "https://reservasihotel.infinityfreeapp.com"
           cmd_options: "-a"
+
+      # Convert JSON report ke CSV
+      - name: Convert JSON to CSV
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          jq -r '.site[0].alerts[] | [
+            .riskdesc,
+            .alert,
+            .count,
+            .solution,
+            .reference
+          ] | @csv' zap_report.json > zap_report.csv
 
       - name: Upload ZAP Reports
         uses: actions/upload-artifact@v4
         with:
-          name: zap-reports   # ✅ ganti nama artifact
+          name: zap-reports
           path: |
             zap_report.html
             zap_report.json
             zap_report.md
+            zap_report.csv   # ✅ CSV juga ikut diupload
