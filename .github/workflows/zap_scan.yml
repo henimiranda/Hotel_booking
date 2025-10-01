@@ -1,12 +1,9 @@
-name: ZAP Security Scan (Authenticated via scan_login)
+name: ZAP Security Scan
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   workflow_dispatch:
-
-permissions:
-  contents: read
 
 jobs:
   zap_scan:
@@ -15,34 +12,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run ZAP Full Scan (Auto Login via scan_login.php)
-        uses: zaproxy/action-full-scan@v0.8.0
+      - name: Run ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
         with:
-          target: "https://reservasihotel.infinityfreeapp.com/scan_login.php?scan_token=scan2025token123"
-          cmd_options: "-a -r zap_report.html -J zap_report.json -w zap_report.md -x zap_report.xml"
-
-      - name: Convert JSON to CSV
-        run: |
-          sudo apt-get update && sudo apt-get install -y jq
-          if [ -f zap_report.json ]; then
-            jq -r '.site[0].alerts[] | [
-              .riskdesc,
-              .alert,
-              .count,
-              .solution,
-              .reference
-            ] | @csv' zap_report.json > zap_report.csv || echo "no-alerts" > zap_report.csv
-          else
-            echo "zap_report.json not found" > zap_report.csv
-          fi
+          target: "https://reservasihotel.infinityfreeapp.com/customer_dashboard.php"
+          cmd_options: "-a -J report_json.json -w report_html.html -m 10 -r report_md.md -x report_xml.xml -c report_csv.csv"
 
       - name: Upload ZAP Reports
         uses: actions/upload-artifact@v4
         with:
           name: zap-reports
           path: |
-            zap_report.html
-            zap_report.json
-            zap_report.xml
-            zap_report.md
-            zap_report.csv
+            report_html.html
+            report_json.json
+            report_md.md
+            report_xml.xml
+            report_csv.csv
